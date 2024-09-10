@@ -9,7 +9,7 @@ import UIKit
 import CoreData
 import SystemConfiguration
 
-class ViewController: UIViewController{
+class ViewController: UIViewController {
     
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var serachNameTF: UITextField!
@@ -20,9 +20,7 @@ class ViewController: UIViewController{
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         setupTable()
-        
         if isInternetAvailable(){
             connectbreweries()
         } else {
@@ -35,15 +33,12 @@ class ViewController: UIViewController{
         var reachability = SCNetworkReachabilityCreateWithName(nil, "www.apple.com")
         var flags = SCNetworkReachabilityFlags()
         SCNetworkReachabilityGetFlags(reachability!, &flags)
-        
         return flags.contains(.reachable) && !flags.contains(.connectionRequired)
-        
     }
     
-    func setupTable(){
+    func setupTable() {
         tableView.dataSource = self
         tableView.delegate = self
-        
     }
     
     // API for catch breweries
@@ -71,13 +66,12 @@ class ViewController: UIViewController{
             } catch let jsonError {
                 print("Cant decode", jsonError)
             }
-            
         }
         task.resume()
     }
     
     // saving catched breweries
-    func saveBreweriesToCoreData(_ breweries: Breweries){
+    func saveBreweriesToCoreData(_ breweries: Breweries) {
         // delete old data
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "BreweryEntity")
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
@@ -106,19 +100,16 @@ class ViewController: UIViewController{
             breweryEntity.adress3 = brewery.address3
             breweryEntity.street = brewery.street
         }
-        
         do {
             try context.save()
         } catch {
             print("Failed to save data \(error)")
         }
-        
     }
     
     // upload data from core data
-    func fetchBreweriesFromCoreData(){
+    func fetchBreweriesFromCoreData() {
         let request: NSFetchRequest<BreweryEntity> = BreweryEntity.fetchRequest()
-        
         do {
             let breweryEntities = try context.fetch(request)
             breweries = breweryEntities.map { breweryEntity in
@@ -148,47 +139,35 @@ class ViewController: UIViewController{
     }
     
     // API for catching breweries by Name
-    func searchBreweries(byName name: String){
+    func searchBreweries(byName name: String) {
         let urlString = "​https://api.openbrewerydb.org/breweries"
         let noTrimmedUrlString = "\(urlString)?by_name=\(name)"
-        
         guard let trimmedUrlString = noTrimmedUrlString.trimmingCharacters(in: .whitespacesAndNewlines).addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: trimmedUrlString) else { return }
-        
         let task = URLSession.shared.dataTask(with: url) {
             [weak self] data, response, error in
-            guard let self  = self else {
-                
-                return
-            }
-            guard let data = data, error == nil else {return}
-            
+            guard let self  = self else { return }
+            guard let data = data, error == nil else { return }
             do {
                 let breweries = try
                 JSONDecoder().decode(Breweries.self, from: data)
                 self.breweries = breweries
-                
-                
                 self.saveBreweriesToCoreData(breweries)
                 
                 DispatchQueue.main.async {
-                    
                     self.tableView.reloadData()
                 }
             } catch let jsonError {
                 print("Cant decode", jsonError)
             }
-            
         }
         task.resume()
     }
     
-    
     // search Breweries in Core Data by Name
-    func searchBreweriesInCoreData(byName name: String){
+    func searchBreweriesInCoreData(byName name: String) {
         let request: NSFetchRequest<BreweryEntity> = BreweryEntity.fetchRequest()
         request.predicate = NSPredicate(format: "name CONTAINS[cd] %@", name)
-        
         do {
             let breweryEntities = try context.fetch(request)
             breweries = breweryEntities.map { breweryEntity in
@@ -218,16 +197,13 @@ class ViewController: UIViewController{
     }
     
     @IBAction func searchButtonTapped(_ sender: UIButton) {
-        guard let query = serachNameTF.text, !query.isEmpty else { return  connectbreweries()  }
+        guard let query = serachNameTF.text, !query.isEmpty else { return  connectbreweries() }
         if isInternetAvailable(){
             searchBreweries(byName: query)
-            
         } else {
-            
             searchBreweriesInCoreData(byName: query)
         }
     }
-    
 }
 
 
@@ -242,6 +218,5 @@ extension ViewController: UITableViewDataSource,  UITableViewDelegate {
         cell.connect(with: brewery)
         return cell
     }
-    
 }
 
