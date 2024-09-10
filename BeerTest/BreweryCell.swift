@@ -64,6 +64,7 @@ class BreweryCell: UITableViewCell {
         }
         
         // show on map
+            
         if let latit = brewery.latitude,
            let longit = brewery.longitude, !latit.isEmpty, !longit.isEmpty {
             mapButton.isHidden = false
